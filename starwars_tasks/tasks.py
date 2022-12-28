@@ -73,6 +73,6 @@ def task_one():
     output = {
         "char_ids_fetched": char_ids_fetched,
         "records_affected": count_,
-        "names": char_names
+        "names": char_names,
     }
     return Response(json.dumps(output), status=201, mimetype="application/json")

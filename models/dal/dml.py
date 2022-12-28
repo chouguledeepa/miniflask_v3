@@ -136,8 +136,8 @@ def get_url_ids(urls) -> str:
     """
     ids = []
     for url in urls:
-        ids.append(url.split('/')[-1])
-    return ' '.join(ids)
+        ids.append(url.split("/")[-1])
+    return " ".join(ids)
 
 
 def upsert_characters(character: Dict, endpoint: str) -> Optional[int]:
