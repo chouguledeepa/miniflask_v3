@@ -91,4 +91,7 @@ def task_one():
     # for validating response
     # response = parse_obj_as(list(output))
 
+    # TODO convert response into flask Response object
+    # from flask import Response
+    # Response(obj, status=<>, mimetype=<>)
     return {"success": 200}
