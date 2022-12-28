@@ -36,6 +36,11 @@ class Character_(Base):
             raise ValueError("height is not valid")
 
 
+class TaskOneResponse(BaseModel):
+    records_count: int
+    name: str
+
+
 if __name__ == "__main__":
     data = {
         "name": "Luke Skywalker",

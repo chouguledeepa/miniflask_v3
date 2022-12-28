@@ -7,6 +7,17 @@ from models.dal.db_conn_helper import get_db_conn
 from typing import List
 
 
+def fetch_resources(table_name: str):
+    """functions fetches all the data from DB tables"""
+
+    with get_db_conn() as conn:
+        cursor = conn.cursor()
+        sql_magic = f"select * from {table_name};"
+        cursor.execute(sql_magic)
+        data = cursor.fetchall()
+    return data
+
+
 def insert_resource(
     table_name: str, primary_key_: str, primary_value: int, columns_: List, values: List
 ):
