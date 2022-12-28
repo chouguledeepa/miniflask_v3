@@ -29,7 +29,7 @@ http://127.0.0.1:5000/taskfour
 
 # third party imports
 from flask import Flask
-from starwars_tasks.tasks import starwars
+from starwars_tasks.tasks import starwars_v1
 from crud_ops.starwars import crud_app
 
 
@@ -38,5 +38,6 @@ app = Flask(__name__)
 
 
 # registering sub-applications with main flask application
-app.register_blueprint(starwars)
+app.register_blueprint(starwars_v1)
 app.register_blueprint(crud_app)
+print(app.blueprints)

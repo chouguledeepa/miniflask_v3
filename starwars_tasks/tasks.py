@@ -31,10 +31,10 @@ def get_chars(obj_: ProduceChars) -> Optional[List[int]]:
     return characters_
 
 
-starwars = Blueprint("starwars", __name__, url_prefix="/tasks")
+starwars_v1 = Blueprint("starwars", __name__, url_prefix="/tasks")
 
 
-@starwars.route("/taskone")
+@starwars_v1.route("/taskone")
 def task_one():
     """The Star Wars API lists 82 main characters in the Star Wars saga. For the
     first task, we would like you to use a random number generator that picks a
