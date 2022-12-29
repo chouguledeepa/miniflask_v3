@@ -3,6 +3,7 @@ DML stands for Data Manipulation Language
 
 This module contains generic functions to insert data into sql tables
 """
+import logging
 from models.dal.db_conn_helper import get_db_conn
 from typing import List, Dict, Optional
 from collections import OrderedDict
@@ -17,6 +18,34 @@ def fetch_resources(table_name: str):
         cursor.execute(sql_magic)
         data = cursor.fetchall()
     return data
+
+
+def fetch_resource(
+        table_name: str,
+        filter_column=str,
+        filter_value: Optional[int] = None):
+    """
+    functions fetches all the data from DB tables
+
+    Args:
+        table_name (str):
+        filter_column (str): we use this column to filter out using where clause
+        filter_value (int)
+    Returns:
+        dict: returns records from db
+    """
+
+    with get_db_conn() as conn:
+        cursor = conn.cursor()
+        sql_magic = f"select * from {table_name} " \
+                    f"where {filter_column} = {filter_value};"
+        logging.info(f"Here is the SQL query :: {sql_magic}")
+        cursor.execute(sql_magic)
+        data = cursor.fetchall()
+    return data
+
+
+
 
 
 def insert_resource(

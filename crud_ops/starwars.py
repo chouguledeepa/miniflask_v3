@@ -1,6 +1,7 @@
 """
 http://127.0.0.1:5000/swapi/people
-http://127.0.0.1:5000/swapi/films
+http://127.0.0.1:5000/swapi/films (plural API endpoint)
+http://127.0.0.1:5000/swapi/films/1 (singular API endpoint)
 http://127.0.0.1:5000/swapi/species
 http://127.0.0.1:5000/swapi/vehicles
 http://127.0.0.1:5000/swapi/starships
@@ -9,7 +10,7 @@ http://127.0.0.1:5000/swapi/planets
 
 import json
 from flask import Blueprint, Response, Flask
-from models.dal.dml import fetch_resources
+from models.dal.dml import fetch_resources, fetch_resource
 
 
 crud_app = Blueprint("crud_app", __name__, url_prefix="/swapi")
@@ -21,9 +22,32 @@ def get_characters():
     return Response(json.dumps(result), status=200, mimetype="application/json")
 
 
+# plural API endpoint
 @crud_app.route("/films", methods=["GET"])
 def get_films():
-    result = fetch_resources("starwarsDB.films")
+    result = fetch_resources("starwarsDB.film")
+
+    from models.datamodels.films import FilmResponse
+
+    from pydantic import parse_obj_as
+    films = parse_obj_as(list[FilmResponse], result)
+    response_obj = json.dumps([film.dict() for film in films])
+    return Response(response_obj, status=200, mimetype="application/json")
+
+
+# singular API endpoint
+@crud_app.route("/films/<int:index>", methods=["GET"])
+def get_film(index):
+    result = fetch_resource(
+        "starwarsDB.film",
+        filter_column="film_id",
+        filter_value=index
+    )
+
+    from models.datamodels.films import FilmResponse
+    from pydantic import parse_obj_as
+    final = parse_obj_as(list(FilmResponse), result)
+
     return Response(json.dumps(result), status=200, mimetype="application/json")
 
 
