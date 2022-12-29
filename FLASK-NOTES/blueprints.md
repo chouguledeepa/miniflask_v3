@@ -1,5 +1,9 @@
 ### blueprint
 - We use blueprints so we can register multiple sub-applications to main application
+- Blueprint is an object which is similar to flask application but not actually a flask application
+- In order to use blueprints we need to register them against the main flask application.
+- We use blueprints to separate each sub-application logic from each other.
+- Every blueprint will have its own static files, template files and view files.
 
 ```from flask import Blueprint```
 
