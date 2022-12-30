@@ -9,9 +9,10 @@ http://127.0.0.1:5000/swapi/planets
 """
 
 import json
-from flask import Blueprint, Response, Flask
+from flask import Blueprint, Response, Flask, request
 from models.dal.dml import fetch_resources, fetch_resource
-from models.datamodels.films import FilmResponse
+from models.datamodels.films import FilmResponse, Film_
+from models.dal.dml import insert_resource, upsert_films
 
 crud_app = Blueprint("crud_app", __name__, url_prefix="/swapi")
 
@@ -33,6 +34,81 @@ def get_films():
     films = parse_obj_as(list[FilmResponse], result)
     response_obj = json.dumps([film.dict() for film in films])
     return Response(response_obj, status=200, mimetype="application/json")
+
+
+@crud_app.route("/films", methods=["PATCH"])
+def patch_films():
+    request_data = request.json
+    film_data = Film_(**request_data)
+
+    home_url = "https://swapi.dev"
+    relative = "/api/film/{num_}"  # magic string
+    absolute_url = home_url + relative.format(num_=film_data.film_id)
+
+    result = upsert_films(
+        film_data, absolute_url
+    )
+
+    success_msg = "New record created successfully"
+
+    response_obj = {
+        "records_count": result,
+        "film_name": film_data.title,
+        "message": success_msg if result else "Existing record updated"
+    }
+
+    return Response(
+        json.dumps(response_obj),
+        status=200,
+        mimetype="application/json"
+    )
+
+
+@crud_app.route("/films", methods=["POST"])
+def post_films():
+
+    request_data = request.json
+    film_data = Film_(**request_data)
+
+    film_columns = [
+        "title",
+        "opening_crawl",
+        "director",
+        "producer",
+        "release_date",
+        "created",
+        "edited",
+        "url",
+    ]
+
+    film_values = [
+        film_data.title,
+        film_data.opening_crawl,
+        film_data.director,
+        film_data.producer,
+        film_data.release_date.strftime("%y-%m-%d"),
+        film_data.created.strftime("%y-%m-%d"),
+        film_data.edited.strftime("%y-%m-%d"),
+        film_data.url,
+    ]
+
+    result = insert_resource(
+        "film", "film_id", film_data.episode_id, film_columns, film_values
+    )
+
+    success_msg = "record created successfully"
+
+    response_obj = {
+        "records_count": result,
+        "film_name": film_data.title if result else "",
+        "message": success_msg if result else "ERROR"
+    }
+
+    return Response(
+        json.dumps(response_obj),
+        status=201 if result else 409,
+        mimetype="application/json"
+    )
 
 
 # singular API endpoint

@@ -37,15 +37,24 @@ class FilmResponse(BaseModel):
 
 
 class Film_(Base):
+    film_id: int
     title: str
     episode_id: str
     opening_crawl: str
     director: str
     producer: str
-    release_date: str
+    release_date: Union[str, datetime]
 
     characters: Optional[List[str]]
     planets: Optional[List[str]]
     starships: Optional[List[str]]
     vehicles: Optional[List[str]]
     species: Optional[List[str]]
+
+    @validator("release_date")
+    def check_release_date(cls, release_date):
+        if isinstance(release_date, str):
+            return datetime.strptime(release_date, "%d-%m-%y")
+        return release_date
+
+

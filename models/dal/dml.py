@@ -4,6 +4,9 @@ DML stands for Data Manipulation Language
 This module contains generic functions to insert data into sql tables
 """
 import logging
+
+import pymysql
+
 from models.dal.db_conn_helper import get_db_conn
 from typing import List, Dict, Optional
 from collections import OrderedDict
@@ -45,9 +48,6 @@ def fetch_resource(
     return data
 
 
-
-
-
 def insert_resource(
     table_name: str, primary_key_: str, primary_value: int, columns_: List, values: List
 ):
@@ -81,15 +81,19 @@ def insert_resource(
     value_fields = value_fields.rstrip(""", """)
 
     result = None
-    with get_db_conn() as conn:
-        cursor = conn.cursor()
+    try:
+        with get_db_conn() as conn:
+            cursor = conn.cursor()
 
-        sql_magic = f"""insert into 
-        starwarsDB.{table_name} ({primary_key_}, {column_names}) 
-        values ({primary_value}, {value_fields});"""
+            sql_magic = f"""insert into 
+            starwarsDB.{table_name} ({primary_key_}, {column_names}) 
+            values ({primary_value}, {value_fields});"""
 
-        result = cursor.execute(sql_magic)
-        conn.commit()
+            result = cursor.execute(sql_magic)
+            conn.commit()
+    except pymysql.IntegrityError as ex:
+        logging.error(f"The primary key already exists. Error details - {ex}")
+        return 0
     return result
 
 
@@ -102,7 +106,7 @@ def build_upsert_sql_query(
         table_name (str): table under consideration for sql query.
         commands (str): sql commands such as select, insert, update etc.
         prime_key (str): primary key for particular table.
-        prime_value(str): value to be updated for primary key
+        prime_value(int, str): value to be updated for primary key
         clause (str): clauses to filter results.
         keys_ (list): list of keys query refers to.
         values_ (list): list of values query stores (required for insert and update statements.)
@@ -112,11 +116,15 @@ def build_upsert_sql_query(
 
     """
 
-    keys_.remove(prime_key)
+    if prime_key in keys_:
+        keys_.remove(prime_key)
     keys_literals = ", ".join(keys_)
 
     mid_literals = []
-    values_.remove(prime_value)
+
+    if int(prime_value) in values_:
+        values_.remove(int(prime_value))
+
     for i in range(len(values_)):
         mid = '''"''' + str(values_[i]) + '''"'''
         mid_literals.append(mid)
@@ -230,6 +238,76 @@ def upsert_characters(character: Dict, endpoint: str) -> Optional[int]:
 
             result = cursor.execute(sql)
             connection.commit()
+    finally:
+        connection.close()
+
+    return result
+
+
+def upsert_films(film: Dict, endpoint: str) -> Optional[int]:
+    """
+    Inserts values into `films` table, updates on duplicate key.
+    Args:
+        film (dict):
+        endpoint (str):
+    Returns:
+
+    """
+
+    connection = get_db_conn()
+
+    # retrieving keys and values from an OrderedDict into list
+    # so as to maintain relative order
+    film = OrderedDict(film)
+    film_id = int(get_url_ids([endpoint]))
+    keys_ = []
+    values_ = []
+    for key_, val_ in film.items():
+        keys_.append(key_)
+        if isinstance(val_, list):
+            values_.append(get_url_ids(val_))
+        else:
+            values_.append(val_)
+
+    # importing inside the function to avoid `circular imports` issue.
+    from models.datamodels.films import Film_
+    from pydantic.error_wrappers import ValidationError
+
+    # data validation layer using pydantic model.
+    # If endpoint yields no result then return.
+
+    try:
+        if film is not OrderedDict([("detail", "Not found")]):
+            Film_(**film)
+        else:
+            print(f"\n\n[ WARNING ] Endpoint - {endpoint} - yields nothing!!")
+            return None
+    except ValidationError as ve:
+        print(
+            f"[ Error ] fetched film record does not meet validations. "
+            f"Perhaps, type conversions required. More details on error  - {ve}"
+        )
+
+    try:
+        with connection.cursor() as cursor:
+
+            sql = build_upsert_sql_query(
+                "starwarsDB.film",
+                "INSERT INTO",
+                "film_id",
+                film_id,
+                "ON DUPLICATE KEY UPDATE",
+                keys_,
+                values_,
+            )
+
+            print(f"\n see here the SQL query :: \n\n{sql}")
+
+            result = cursor.execute(sql)
+            connection.commit()
+    except pymysql.Error as ex:
+        logging.error("ERROR. Details - {ex}")
+        return 0
     finally:
         connection.close()
 

@@ -3,16 +3,29 @@ This module defines a pydantic basemodel to be used by another
 pydantic models (resource models aka "datamodels")
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from datetime import datetime
+from typing import Union
 
 
 class Base(BaseModel):
     """common attributes available in all resources"""
 
-    created: datetime
-    edited: datetime
+    created: Union[str, datetime]
+    edited: Union[str, datetime]
     url: str
+
+    @validator("created")
+    def check_created(cls, created):
+        if isinstance(created, str):
+            return datetime.strptime(created, "%d-%m-%y")
+        return created
+
+    @validator("edited")
+    def check_edited(cls, edited):
+        if isinstance(edited, str):
+            return datetime.strptime(edited, "%d-%m-%y")
+        return edited
 
 
 if __name__ == "__main__":
