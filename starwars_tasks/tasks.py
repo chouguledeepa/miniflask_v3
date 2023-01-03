@@ -9,10 +9,11 @@ http://127.0.0.1:5000/tasks/taskfour
 
 
 # third party imports
+import json
 import requests
 
 # relative imports (non-local)
-from flask import Blueprint
+from flask import Blueprint, Response
 from typing import Optional, List
 from pydantic import parse_obj_as
 
@@ -20,7 +21,7 @@ from pydantic import parse_obj_as
 from utils.randgen import ProduceChars
 from models.datamodels.characters import Character_
 
-from models.dal.dml import insert_resource
+from models.dal.dml import upsert_characters
 
 
 def get_chars(obj_: ProduceChars) -> Optional[List[int]]:
@@ -56,7 +57,8 @@ def task_one():
 
     print(f"[ INFO ] done - producing random 2 characters")
 
-    output = []
+    char_names = []
+    char_ids_fetched = []
     for num_ in characters:  # [1, 2]
         absolute_url = home_url + relative.format(num_)
         print(f"fetching details using - {absolute_url}  =>\n")
@@ -64,34 +66,13 @@ def task_one():
         response = response.json()
         response["char_id"] = num_
         char_ = Character_(**response)
+        char_names.append(char_.name)
+        char_ids_fetched.append(char_.char_id)
+        count_ = upsert_characters(char_, absolute_url)
 
-        table_name = "characters"
-        primary_key_ = "char_id"
-        primary_val_ = char_.char_id
-
-        columns_ = ["name", "mass", "hair_color", "skin_color", "eye_color", "gender"]
-
-        values_ = [
-            char_.name,
-            char_.mass,
-            char_.hair_color,
-            char_.skin_color,
-            char_.eye_color,
-            char_.gender,
-        ]
-
-        count = insert_resource(table_name, primary_key_, primary_val_, columns_, values_)
-        output.append({"records_count": count, "name": char_.name})
-
-        # TODO
-        # Do exception handling for `from pymysql import IntegrityError`
-        # In exception block try `upsert query`
-
-    # serialization of multiple records into pydantic model
-    # for validating response
-    # response = parse_obj_as(list(output))
-
-    # TODO convert response into flask Response object
-    # from flask import Response
-    # Response(obj, status=<>, mimetype=<>)
-    return {"success": 200}
+    output = {
+        "char_ids_fetched": char_ids_fetched,
+        "records_affected": count_,
+        "names": char_names,
+    }
+    return Response(json.dumps(output), status=201, mimetype="application/json")
