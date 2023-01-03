@@ -8,8 +8,28 @@ import logging
 import pymysql
 
 from models.dal.db_conn_helper import get_db_conn
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 from collections import OrderedDict
+
+
+def __delete_resource(
+        table_name: str,
+        primary_key: str,
+        primary_val: Union[str, int]
+):
+    """function deletes records based on primary key"""
+
+    try:
+        with get_db_conn() as conn:
+            cursor = conn.cursor()
+            if isinstance(primary_val, int):
+                sql_magic = f"delete from {table_name} where {primary_key}={primary_val}"
+                data = cursor.execute(sql_magic)
+                conn.commit()
+        return data
+    except pymysql.Error as ex:
+        logging.error("ERROR. Details - {ex}")
+        return 0
 
 
 def fetch_resources(table_name: str):

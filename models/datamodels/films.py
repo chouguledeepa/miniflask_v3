@@ -36,6 +36,19 @@ class FilmResponse(BaseModel):
             return ""
 
 
+class PatchFilm_(BaseModel):
+    film_id: int
+    title: Optional[str]
+    episode_id: Optional[str]
+    opening_crawl: Optional[str]
+    director: Optional[str]
+    producer: Optional[str]
+    release_date: Union[str, datetime] = "25-05-77"
+    created: Union[str, datetime] = "25-05-77"
+    edited: Union[str, datetime] = "25-05-77"
+    url: Optional[str]
+
+
 class Film_(Base):
     film_id: int
     title: str

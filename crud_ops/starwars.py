@@ -1,17 +1,27 @@
 """
 http://127.0.0.1:5000/swapi/people
-http://127.0.0.1:5000/swapi/films (plural API endpoint)
+http://127.0.0.1:5000/swapi/films (plural API GET, POST endpoint)
 http://127.0.0.1:5000/swapi/films/1 (singular API endpoint)
 http://127.0.0.1:5000/swapi/species
 http://127.0.0.1:5000/swapi/vehicles
 http://127.0.0.1:5000/swapi/starships
 http://127.0.0.1:5000/swapi/planets
+
+##
+
+GET
+POST
+PATCH
+
+
+
 """
 
 import json
 from flask import Blueprint, Response, Flask, request
-from models.dal.dml import fetch_resources, fetch_resource
-from models.datamodels.films import FilmResponse, Film_
+from pydantic.error_wrappers import ValidationError
+from models.dal.dml import fetch_resources, fetch_resource, __delete_resource
+from models.datamodels.films import FilmResponse, Film_, PatchFilm_
 from models.dal.dml import insert_resource, upsert_films
 
 crud_app = Blueprint("crud_app", __name__, url_prefix="/swapi")
@@ -36,10 +46,74 @@ def get_films():
     return Response(response_obj, status=200, mimetype="application/json")
 
 
+@crud_app.route("/films", methods=["DELETE"])
+def delete_films():
+    """
+    There are 2 types of parameters
+    - PATH variable
+    - QUERY parameter
+    Returns:
+
+    """
+
+    film_id = int(request.args.get("film_id"))
+    result = __delete_resource("starwarsDB.film", "film_id", film_id)
+
+    if result == 0:
+        response_obj = {"ERROR": f"no records found to delete against film_id {film_id}"}
+        return Response(
+            json.dumps(response_obj),
+            status=200,
+            mimetype="application/json"
+        )
+
+    response_obj = {"message": f"successfully deleted records - {film_id}"}
+    return Response(
+        json.dumps(response_obj),
+        status=200,
+        mimetype="application/json"
+    )
+
+
+
+@crud_app.route("/films", methods=["PUT"])
+def put_films():
+    request_data = request.json
+    try:
+        film_data = Film_(**request_data)
+    except ValidationError as ex:
+        return Response(
+            json.dumps({"message": "bad request"}),
+            status=400,
+            mimetype="application/json"
+        )
+    home_url = "https://swapi.dev"
+    relative = "/api/film/{num_}"  # magic string
+    absolute_url = home_url + relative.format(num_=film_data.film_id)
+
+    result = upsert_films(
+        film_data, absolute_url
+    )
+
+    success_msg = "New record created successfully"
+
+    response_obj = {
+        "records_count": result,
+        "film_name": film_data.title,
+        "message": success_msg if result else "Existing record updated"
+    }
+
+    return Response(
+        json.dumps(response_obj),
+        status=200,
+        mimetype="application/json"
+    )
+
+
 @crud_app.route("/films", methods=["PATCH"])
 def patch_films():
     request_data = request.json
-    film_data = Film_(**request_data)
+    film_data = PatchFilm_(**request_data)
 
     home_url = "https://swapi.dev"
     relative = "/api/film/{num_}"  # magic string
