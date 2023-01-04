@@ -41,6 +41,7 @@ def get_films():
     result = fetch_resources("starwarsDB.film")
 
     from pydantic import parse_obj_as
+
     films = parse_obj_as(list[FilmResponse], result)
     response_obj = json.dumps([film.dict() for film in films])
     return Response(response_obj, status=200, mimetype="application/json")
@@ -60,20 +61,15 @@ def delete_films():
     result = __delete_resource("starwarsDB.film", "film_id", film_id)
 
     if result == 0:
-        response_obj = {"ERROR": f"no records found to delete against film_id {film_id}"}
+        response_obj = {
+            "ERROR": f"no records found to delete against film_id {film_id}"
+        }
         return Response(
-            json.dumps(response_obj),
-            status=200,
-            mimetype="application/json"
+            json.dumps(response_obj), status=200, mimetype="application/json"
         )
 
     response_obj = {"message": f"successfully deleted records - {film_id}"}
-    return Response(
-        json.dumps(response_obj),
-        status=200,
-        mimetype="application/json"
-    )
-
+    return Response(json.dumps(response_obj), status=200, mimetype="application/json")
 
 
 @crud_app.route("/films", methods=["PUT"])
@@ -85,29 +81,23 @@ def put_films():
         return Response(
             json.dumps({"message": "bad request"}),
             status=400,
-            mimetype="application/json"
+            mimetype="application/json",
         )
     home_url = "https://swapi.dev"
     relative = "/api/film/{num_}"  # magic string
     absolute_url = home_url + relative.format(num_=film_data.film_id)
 
-    result = upsert_films(
-        film_data, absolute_url
-    )
+    result = upsert_films(film_data, absolute_url)
 
     success_msg = "New record created successfully"
 
     response_obj = {
         "records_count": result,
         "film_name": film_data.title,
-        "message": success_msg if result else "Existing record updated"
+        "message": success_msg if result else "Existing record updated",
     }
 
-    return Response(
-        json.dumps(response_obj),
-        status=200,
-        mimetype="application/json"
-    )
+    return Response(json.dumps(response_obj), status=200, mimetype="application/json")
 
 
 @crud_app.route("/films", methods=["PATCH"])
@@ -119,23 +109,17 @@ def patch_films():
     relative = "/api/film/{num_}"  # magic string
     absolute_url = home_url + relative.format(num_=film_data.film_id)
 
-    result = upsert_films(
-        film_data, absolute_url
-    )
+    result = upsert_films(film_data, absolute_url)
 
     success_msg = "New record created successfully"
 
     response_obj = {
         "records_count": result,
         "film_name": film_data.title,
-        "message": success_msg if result else "Existing record updated"
+        "message": success_msg if result else "Existing record updated",
     }
 
-    return Response(
-        json.dumps(response_obj),
-        status=200,
-        mimetype="application/json"
-    )
+    return Response(json.dumps(response_obj), status=200, mimetype="application/json")
 
 
 @crud_app.route("/films", methods=["POST"])
@@ -175,13 +159,13 @@ def post_films():
     response_obj = {
         "records_count": result,
         "film_name": film_data.title if result else "",
-        "message": success_msg if result else "ERROR"
+        "message": success_msg if result else "ERROR",
     }
 
     return Response(
         json.dumps(response_obj),
         status=201 if result else 409,
-        mimetype="application/json"
+        mimetype="application/json",
     )
 
 
@@ -189,9 +173,7 @@ def post_films():
 @crud_app.route("/films/<int:index>", methods=["GET"])
 def get_film(index):
     result = fetch_resource(
-        "starwarsDB.film",
-        filter_column="film_id",
-        filter_value=index
+        "starwarsDB.film", filter_column="film_id", filter_value=index
     )
 
     if result:
@@ -199,7 +181,9 @@ def get_film(index):
         return Response(response_obj.json(), status=200, mimetype="application/json")
     else:
         response_obj = {"ERROR": f"No records found for ID - {index}"}
-        return Response(json.dumps(response_obj), status=200, mimetype="application/json")
+        return Response(
+            json.dumps(response_obj), status=200, mimetype="application/json"
+        )
 
 
 # TODO : implement singular endpoint for each and every resource

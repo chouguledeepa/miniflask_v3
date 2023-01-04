@@ -12,18 +12,16 @@ from typing import List, Dict, Optional, Union
 from collections import OrderedDict
 
 
-def __delete_resource(
-        table_name: str,
-        primary_key: str,
-        primary_val: Union[str, int]
-):
+def __delete_resource(table_name: str, primary_key: str, primary_val: Union[str, int]):
     """function deletes records based on primary key"""
 
     try:
         with get_db_conn() as conn:
             cursor = conn.cursor()
             if isinstance(primary_val, int):
-                sql_magic = f"delete from {table_name} where {primary_key}={primary_val}"
+                sql_magic = (
+                    f"delete from {table_name} where {primary_key}={primary_val}"
+                )
                 data = cursor.execute(sql_magic)
                 conn.commit()
         return data
@@ -44,9 +42,8 @@ def fetch_resources(table_name: str):
 
 
 def fetch_resource(
-        table_name: str,
-        filter_column=str,
-        filter_value: Optional[int] = None):
+    table_name: str, filter_column=str, filter_value: Optional[int] = None
+):
     """
     functions fetches all the data from DB tables
 
@@ -60,8 +57,9 @@ def fetch_resource(
 
     with get_db_conn() as conn:
         cursor = conn.cursor()
-        sql_magic = f"select * from {table_name} " \
-                    f"where {filter_column} = {filter_value};"
+        sql_magic = (
+            f"select * from {table_name} " f"where {filter_column} = {filter_value};"
+        )
         logging.info(f"Here is the SQL query :: {sql_magic}")
         cursor.execute(sql_magic)
         data = cursor.fetchall()
