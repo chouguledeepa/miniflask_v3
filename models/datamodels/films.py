@@ -69,5 +69,3 @@ class Film_(Base):
         if isinstance(release_date, str):
             return datetime.strptime(release_date, "%d-%m-%y")
         return release_date
-
-
