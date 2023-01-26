@@ -24,8 +24,6 @@ from models.dal.dml import fetch_resources, fetch_resource, __delete_resource
 from models.datamodels.films import FilmResponse, Film_, PatchFilm_
 from models.dal.dml import insert_resource, upsert_films
 
-crud_app = Blueprint("crud_app", __name__, url_prefix="/swapi")
-
 
 @crud_app.route("/people", methods=["GET"])
 def get_characters():

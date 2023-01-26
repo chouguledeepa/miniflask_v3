@@ -47,7 +47,6 @@ if __name__ == "__main__":
         db.Column("email", db.String(250)),
         db.Column("contact", db.Integer)
     )
-    # meta_data_obj.create_all(engine)
 
     from sqlalchemy.sql import select
     s = select(profile_)
